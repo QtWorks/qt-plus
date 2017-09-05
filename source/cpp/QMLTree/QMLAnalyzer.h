@@ -10,7 +10,6 @@
 #include <QMutex>
 #include <QString>
 #include <QVariant>
-#include <QJSEngine>
 
 // Foundations
 #include "../CXMLNode.h"
@@ -25,11 +24,10 @@
 
 //-------------------------------------------------------------------------------------------------
 
+//! Defines a static QML analyzer
 class QTPLUSSHARED_EXPORT QMLAnalyzer : public QThread
 {
     Q_OBJECT
-
-    friend class QMLAnalyzerWrapper;
 
 public:
 
@@ -137,19 +135,25 @@ protected:
     bool analyze_Recurse(QString sDirectory);
 
     //!
-    void runGrammar(const QString& sFileName, QMLFile* pFile);
+    void runGrammar(QMLFile* pFile);
 
     //!
-    void runGrammar_Recurse(const QString& sFileName, QMLEntity* pEntity);
+    void runGrammar_Recurse(QMLFile* pFile, QMLEntity* pEntity);
 
     //!
-    bool runGrammar_Reject(const QString& sFileName, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule, bool bInverseLogic);
+    bool runGrammar_Reject(QMLFile* pFile, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule, bool bInverseLogic);
 
     //!
-    bool runGrammar_SatisfiesConditions(const QString& sFileName, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule);
+    bool runGrammar_SatisfiesConditions(QMLFile* pFile, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule);
 
     //!
     int runGrammar_CountNested(const QString& sClassName, QMLEntity* pEntity);
+
+    //!
+    bool runGrammar_importUsed(QMLFile* pFile, QMLImport* pImport);
+
+    //!
+    bool isClassUsed(QMLFile* pFile, QMLEntity* pEntity, const QString& sClassName);
 
     //!
     void outputError(const QString& sFileName, const QPoint& pPosition, const QString& sText);
@@ -157,11 +161,8 @@ protected:
 protected:
 
     QMutex                          m_mContextMutex;
-    QJSEngine                       m_eEngine;
     QString                         m_sFolder;
     QString                         m_sFile;
-    QString                         m_sText;
-    QString                         m_sBeautifyScript;
     QMLTreeContext*                 m_pContext;
     QVector<QMLAnalyzerError>       m_vErrors;
     CXMLNode                        m_xGrammar;
@@ -171,29 +172,4 @@ protected:
     bool                            m_bRewriteFiles;
     bool                            m_bRemoveUnreferencedSymbols;
     bool                            m_bStopAnalyzeRequested;
-};
-
-//-------------------------------------------------------------------------------------------------
-
-class QTPLUSSHARED_EXPORT QMLAnalyzerWrapper : public QObject
-{
-    Q_OBJECT
-
-public:
-
-    //!
-    QMLAnalyzerWrapper(QMLAnalyzer* pAnalyzer)
-        : m_pAnalyzer(pAnalyzer)
-    {
-    }
-
-    //!
-    Q_INVOKABLE QJSValue text()
-    {
-        return m_pAnalyzer->m_eEngine.toScriptValue(m_pAnalyzer->m_sText);
-    }
-
-protected:
-
-    QMLAnalyzer* m_pAnalyzer;
 };

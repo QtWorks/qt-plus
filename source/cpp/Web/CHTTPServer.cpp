@@ -16,7 +16,33 @@
 /*!
     \class CHTTPServer
     \inmodule qt-plus
-    \brief A simple HTTP server that can serve files and dynamic content.
+    \brief A basic HTTP server that can serve files and dynamic content.
+
+    \section1 How it works
+    This server listens to and processes HTTP requests on a given port. \br
+    When asked for a resource, the first thing it does is check if it exists on disk. If it does
+    not, the server executes its getContent() which may be overridden in order to
+    return some HTML content to the client. \br
+    The disk access will be limited to cetrain folders, which are specified using the addAuthorizedFolder()
+    method. \br
+    There is a flood protection mechanism which can be disabled with the useFloodProtection() method.
+
+    \section1 Sample
+    The following will create a HTTP server that listens on port 8080 and greets clients with "Hello world!"
+    \code
+    class MyHTTPServer : public CHTTPServer
+    {
+        MyHTTPServer() : CHTTPServer(8080)
+        {
+            addAuthorizedFolder("c:\mywebfolder");
+        }
+
+        virtual void getContent(const CWebContext& tContext, QString& sHead, QString& sBody, QString& sCustomResponse, QString& sCustomResponseMIME)
+        {
+            sBody = "<div>Hello world!</div>";
+        }
+    }
+    \endcode
 */
 
 //-------------------------------------------------------------------------------------------------
@@ -384,7 +410,7 @@ void CHTTPServer::processRequest(QTcpSocket* pSocket)
     }
 #endif
 
-    if (pData != NULL)
+    if (pData != nullptr)
     {
         bool bKeepAlive = false;
 
@@ -1159,16 +1185,16 @@ QString CHTTPServer::decodeURLParameters(QString sText)
 QString CHTTPServer::cleanIP(const QString& sText)
 {
     QString sReturnValue = sText;
-    QRegExp tRegExp_ipv4(".*([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*");
     QRegExp tRegExp_ipv6("([A-Fa-f0-9]{1,4}::?){1,7}[A-Fa-f0-9]{1,4}");
+    QRegExp tRegExp_ipv4(".*([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*");
 
-    if (tRegExp_ipv4.indexIn(sText) != -1)
-    {
-        sReturnValue = tRegExp_ipv4.cap(1);
-    }
-    else if (tRegExp_ipv6.indexIn(sText) != -1)
+    if (tRegExp_ipv6.indexIn(sText) != -1)
     {
         sReturnValue = tRegExp_ipv6.cap(0);
+    }
+    else if (tRegExp_ipv4.indexIn(sText) != -1)
+    {
+        sReturnValue = tRegExp_ipv4.cap(1);
     }
 
     return sReturnValue;
@@ -1183,7 +1209,7 @@ QString CHTTPServer::cleanIP(const QString& sText)
 */
 void CHTTPServer::LogRequest(QString sIP, QString sText)
 {
-    // Récupération des tokens
+    // Read tokens
     QStringList lTokens = sText.split(QRegExp("[ \n][ \n]*"));
 
     if (lTokens.count() > 1)

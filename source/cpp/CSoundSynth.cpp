@@ -5,8 +5,6 @@
 // Application
 #include "CSoundSynth.h"
 
-using namespace CarEmulator;
-
 const int DataSampleRateHz  = 44100;
 
 //-------------------------------------------------------------------------------------------------
@@ -161,6 +159,9 @@ CSoundSynth::CSoundSynthGenerator::~CSoundSynthGenerator()
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    Returns the audio buffers.
+*/
 QList<QByteArray> CSoundSynth::CSoundSynthGenerator::getBuffers()
 {
     QList<QByteArray> baReturnValue;
@@ -186,6 +187,9 @@ QList<QByteArray> CSoundSynth::CSoundSynthGenerator::getBuffers()
 
 //-------------------------------------------------------------------------------------------------
 
+/*!
+    Stops the synthesize thread.
+*/
 void CSoundSynth::CSoundSynthGenerator::stopMe()
 {
     m_bRun = false;
@@ -196,7 +200,7 @@ void CSoundSynth::CSoundSynthGenerator::stopMe()
 
 void CSoundSynth::CSoundSynthGenerator::run()
 {
-    if (m_pSynth != NULL)
+    if (m_pSynth != nullptr)
     {
         while (m_bRun)
         {

@@ -345,17 +345,24 @@ QMLAnalyzerError::QMLAnalyzerError(const QMLAnalyzerError& target)
 QMLAnalyzerError::QMLAnalyzerError(const QString& sFileName, QPoint pPosition, const QString& sText)
     : m_sFileName(sFileName)
     , m_pPosition(pPosition)
+    , m_pOriginalPosition(pPosition)
     , m_sText(sText)
 {
 }
 
 QMLAnalyzerError& QMLAnalyzerError::operator = (const QMLAnalyzerError& target)
 {
-    m_sFileName     = target.m_sFileName;
-    m_pPosition     = target.m_pPosition;
-    m_sText         = target.m_sText;
+    m_sFileName         = target.m_sFileName;
+    m_pPosition         = target.m_pPosition;
+    m_pOriginalPosition   = target.m_pOriginalPosition;
+    m_sText             = target.m_sText;
 
     return *this;
+}
+
+void QMLAnalyzerError::setPosition(const QPoint& point)
+{
+    m_pPosition = point;
 }
 
 QString QMLAnalyzerError::fileName() const
@@ -366,6 +373,11 @@ QString QMLAnalyzerError::fileName() const
 QPoint QMLAnalyzerError::position() const
 {
     return m_pPosition;
+}
+
+QPoint QMLAnalyzerError::originalPosition() const
+{
+    return m_pOriginalPosition;
 }
 
 QString QMLAnalyzerError::text() const
@@ -386,7 +398,13 @@ void QMLAnalyzerError::clear()
 {
     m_sFileName.clear();
     m_pPosition = QPoint(0, 0);
+    m_pOriginalPosition = QPoint(0, 0);
     m_sText.clear();
+}
+
+void QMLAnalyzerError::revertToOriginalPosition()
+{
+    m_pPosition = m_pOriginalPosition;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -424,6 +442,15 @@ QMLTreeContext::QMLTreeContext()
     m_mTokens["new"] = TOKEN_NEW;
     m_mTokens["null"] = TOKEN_NULL;
     m_mTokens["undefined"] = TOKEN_UNDEFINED;
+
+    m_eEngine.globalObject().setProperty("wrapper", m_eEngine.newQObject(new QMLTreeContextWrapper(this)));
+
+    QFile fScript(":/beautify.js");
+    if (fScript.open(QFile::ReadOnly))
+    {
+        m_sBeautifyScript = fScript.readAll();
+        fScript.close();
+    }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -445,6 +472,8 @@ QMLTreeContext::~QMLTreeContext()
 
     m_sScopes.clear();
     m_vFiles.clear();
+
+    m_eEngine.globalObject().setProperty("wrapper", m_eEngine.newQObject(nullptr));
 
 #ifdef TRACK_ENTITIES
 
@@ -758,6 +787,30 @@ void QMLTreeContext::showError(const QString& sText)
 //-------------------------------------------------------------------------------------------------
 
 /*!
+    Writes the contents of \a pFile to disk.
+*/
+void QMLTreeContext::writeFile(QMLFile* pFile)
+{
+    QFile file(pFile->fileName());
+
+    if (file.open(QFile::WriteOnly))
+    {
+        m_sText.clear();
+        QTextStream stream(&m_sText);
+
+        pFile->toQML(stream);
+
+        QJSValue output = m_eEngine.evaluate(m_sBeautifyScript);
+        m_sText = output.toString();
+
+        file.write(m_sText.toLatin1());
+        file.close();
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
     Implements the thread's \c run method, simply calls \c parse().
 */
 void QMLTreeContext::run()
@@ -769,7 +822,7 @@ void QMLTreeContext::run()
 
 int QMLTreeContext::parseNextToken(UParserValue* LVAL)
 {
-    if (SCOPE.m_pCurrentTokenValue != NULL)
+    if (SCOPE.m_pCurrentTokenValue != nullptr)
     {
         SCOPE.m_pCurrentTokenValue->clear();
     }
@@ -991,16 +1044,6 @@ int QMLTreeContext::parseNextToken(UParserValue* LVAL)
     // 2's complement
     if (c == '~') { STORE(c); return TOKEN_COMPLEMENT; }
 
-    /*
-      // Simple '[' or '[]' dimension operator
-      if (c == '[')
-      {
-        STORE(c); GET(d);
-        if (d == ']') { STORE(d); return TOK_DIMENSION; }
-        UNGET(d); return c;
-      }
-    */
-
     // Simple '[' or '[]' dimension operator
     if (c == '[')
     {
@@ -1049,7 +1092,7 @@ int QMLTreeContext::parseNextToken(UParserValue* LVAL)
         return TOKEN_LITERAL;
     }
 
-    //
+    // Number starting with a dot
 
     if (c == '.')
     {

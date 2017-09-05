@@ -17,7 +17,7 @@
 /*!
     \class QMLAnalyzer
     \inmodule unis-lib
-    \brief A QML analyzer (limited to the scope of a file). \br
+    \brief A QML analyzer (limited to the scope of a file for now).
 
     \section1 How it works
     This class runs checks over all contents of a QML file using a grammar file in XML format.
@@ -386,38 +386,41 @@
 //-------------------------------------------------------------------------------------------------
 // XML Grammar File Tokens
 
-#define ANALYZER_TOKEN_MACRO        "Macro"
-#define ANALYZER_TOKEN_NAME         "Name"
-#define ANALYZER_TOKEN_CHECK        "Check"
-#define ANALYZER_TOKEN_CLASS        "Class"
-#define ANALYZER_TOKEN_LIST         "List"
-#define ANALYZER_TOKEN_COUNT        "Count"
-#define ANALYZER_TOKEN_MEMBER       "Member"
-#define ANALYZER_TOKEN_NESTED_COUNT "NestedCount"
-#define ANALYZER_TOKEN_ACCEPT       "Accept"
-#define ANALYZER_TOKEN_REJECT       "Reject"
-#define ANALYZER_TOKEN_TEXT         "Text"
-#define ANALYZER_TOKEN_TYPE         "Type"
-#define ANALYZER_TOKEN_VALUE        "Value"
-#define ANALYZER_TOKEN_REGEXP       "RegExp"
-#define ANALYZER_TOKEN_PATH         "Path"
-#define ANALYZER_TOKEN_OPERATION    "Operation"
-#define ANALYZER_TOKEN_EXISTS       "Exists"
-#define ANALYZER_TOKEN_CONTAINS     "Contains"
-#define ANALYZER_TOKEN_CONDITION    "Condition"
-#define ANALYZER_TOKEN_NEGATE       "Negate"
-#define ANALYZER_TOKEN_EMPTY        "Empty"
-#define ANALYZER_TOKEN_FILE_NAME    "filename"
-#define ANALYZER_TOKEN_TRUE         "true"
-#define ANALYZER_TOKEN_FALSE        "false"
+#define ANALYZER_TOKEN_MACRO            "Macro"
+#define ANALYZER_TOKEN_NAME             "Name"
+#define ANALYZER_TOKEN_CHECK            "Check"
+#define ANALYZER_TOKEN_CLASS            "Class"
+#define ANALYZER_TOKEN_LIST             "List"
+#define ANALYZER_TOKEN_COUNT            "Count"
+#define ANALYZER_TOKEN_MEMBER           "Member"
+#define ANALYZER_TOKEN_UNREFED_SYMBOL   "UnreferencedSymbol"
+#define ANALYZER_TOKEN_NESTED_COUNT     "NestedCount"
+#define ANALYZER_TOKEN_ACCEPT           "Accept"
+#define ANALYZER_TOKEN_REJECT           "Reject"
+#define ANALYZER_TOKEN_TEXT             "Text"
+#define ANALYZER_TOKEN_TYPE             "Type"
+#define ANALYZER_TOKEN_VALUE            "Value"
+#define ANALYZER_TOKEN_REGEXP           "RegExp"
+#define ANALYZER_TOKEN_PATH             "Path"
+#define ANALYZER_TOKEN_OPERATION        "Operation"
+#define ANALYZER_TOKEN_EXISTS           "Exists"
+#define ANALYZER_TOKEN_CONTAINS         "Contains"
+#define ANALYZER_TOKEN_CONDITION        "Condition"
+#define ANALYZER_TOKEN_NEGATE           "Negate"
+#define ANALYZER_TOKEN_EMPTY            "Empty"
+#define ANALYZER_TOKEN_USED             "Used"
+#define ANALYZER_TOKEN_PARENT           "parent"
+#define ANALYZER_TOKEN_FILE_NAME        "filename"
+#define ANALYZER_TOKEN_TRUE             "true"
+#define ANALYZER_TOKEN_FALSE            "false"
 
 //-------------------------------------------------------------------------------------------------
 
 /*!
-    Constructs a CCodeAnalyzer.
+    Constructs a QMLAnalyzer.
 */
 QMLAnalyzer::QMLAnalyzer()
-    : QThread(NULL)
+    : QThread(nullptr)
     , m_mContextMutex(QMutex::Recursive)
     , m_pContext(nullptr)
     , m_bIncludeImports(false)
@@ -426,28 +429,22 @@ QMLAnalyzer::QMLAnalyzer()
     , m_bRemoveUnreferencedSymbols(false)
     , m_bStopAnalyzeRequested(false)
 {
-    m_eEngine.globalObject().setProperty("analyzer", m_eEngine.newQObject(new QMLAnalyzerWrapper(this)));
-
-    QFile fScript(":/beautify.js");
-    if (fScript.open(QFile::ReadOnly))
-    {
-        m_sBeautifyScript = fScript.readAll();
-        fScript.close();
-    }
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
-    Destroys a CCodeAnalyzer.
+    Destroys a QMLAnalyzer.
 */
 QMLAnalyzer::~QMLAnalyzer()
 {
-    m_eEngine.globalObject().setProperty("analyzer", m_eEngine.newQObject(nullptr));
-
     if (m_pContext != nullptr)
     {
         delete m_pContext;
     }
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Sets the base folder member to \a sFolder.
@@ -457,6 +454,8 @@ void QMLAnalyzer::setFolder(const QString& sFolder)
     m_sFolder = sFolder;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Sets the base file member to \a sFileName.
 */
@@ -464,6 +463,8 @@ void QMLAnalyzer::setFile(const QString& sFileName)
 {
     m_sFile = sFileName;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Sets the include imports flag to \a bValue. If the include imports flag is \c true, the analyzer will parse all imported files in the parsed files.
@@ -473,6 +474,8 @@ void QMLAnalyzer::setIncludeImports(bool bValue)
     m_bIncludeImports = bValue;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Sets the include subfolders flag to \a bValue. If the include subfolders flag is \c true, the analyzer will process all subfolders of the given folder.
 */
@@ -480,6 +483,8 @@ void QMLAnalyzer::setIncludeSubFolders(bool bValue)
 {
     m_bIncludeSubFolders = bValue;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Sets the include rewrite files flag to \a bValue. If the rewrite files flag is \c true, the analyzer will overwrite the contents of the input file using auto-formatting.
@@ -489,6 +494,8 @@ void QMLAnalyzer::setRewriteFiles(bool bValue)
     m_bRewriteFiles = bValue;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Sets the remove unreferenced symbols flag to \a bValue. If the rewrite files flag is \c true, the analyzer will remove any unreferenced symbol.
 */
@@ -496,6 +503,8 @@ void QMLAnalyzer::setRemoveUnreferencedSymbols(bool bValue)
 {
     m_bRemoveUnreferencedSymbols = bValue;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Returns the name of the base folder.
@@ -505,6 +514,8 @@ QString QMLAnalyzer::folder() const
     return m_sFolder;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Returns the list of errors.
 */
@@ -512,6 +523,8 @@ const QVector<QMLAnalyzerError>& QMLAnalyzer::errors() const
 {
     return m_vErrors;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Returns the parsing context.
@@ -522,6 +535,8 @@ QMLTreeContext* QMLAnalyzer::context()
 
     return m_pContext;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Deletes the parsing context and allocates a new one.
@@ -535,6 +550,8 @@ void QMLAnalyzer::clear()
 
     m_pContext = new QMLTreeContext();
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Runs an analysis on the specified folder or file using \a xGrammar. Returns \c true on success.
@@ -574,6 +591,8 @@ bool QMLAnalyzer::analyze(CXMLNode xGrammar)
     return true;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Runs a threaded analyze on the specified folder or file using \a xGrammar. Returns \c true on success.
 */
@@ -586,6 +605,8 @@ void QMLAnalyzer::threadedAnalyze(CXMLNode xGrammar)
         start();
     }
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Stops a threaded analyze if it is running.
@@ -600,6 +621,8 @@ void QMLAnalyzer::stopThreadedAnalyze()
     }
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Override the thread run method.
 */
@@ -607,6 +630,8 @@ void QMLAnalyzer::run()
 {
     analyze(m_xGrammar);
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Parses all macros defined in the current grammar file.
@@ -625,6 +650,8 @@ void QMLAnalyzer::parseMacros()
         m_mMacros[sName] = sValue;
     }
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Returns \a sText with macro names replaced .with their respective value.
@@ -650,6 +677,8 @@ QString QMLAnalyzer::processMacros(const QString& sText)
     return sResult;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Runs an analysis on \a sFileName. Returns \c true on success.
 */
@@ -663,29 +692,18 @@ bool QMLAnalyzer::analyzeFile(const QString& sFileName)
     {
         QMLFile* pFile = m_pContext->fileByFileName(sFileName);
 
-        runGrammar(sFileName, pFile);
-
-        if (m_bRewriteFiles)
+        if (pFile != nullptr)
         {
-            if (m_bRemoveUnreferencedSymbols)
+            runGrammar(pFile);
+
+            if (m_bRewriteFiles)
             {
-                pFile->removeUnreferencedSymbols(m_pContext);
-            }
+                if (m_bRemoveUnreferencedSymbols)
+                {
+                    pFile->removeUnreferencedSymbols(m_pContext);
+                }
 
-            QFile file(sFileName);
-
-            if (file.open(QFile::WriteOnly))
-            {
-                m_sText.clear();
-                QTextStream stream(&m_sText);
-
-                pFile->toQML(stream);
-
-                QJSValue output = m_eEngine.evaluate(m_sBeautifyScript);
-                m_sText = output.toString();
-
-                file.write(m_sText.toLatin1());
-                file.close();
+                m_pContext->writeFile(pFile);
             }
         }
     }
@@ -698,6 +716,8 @@ bool QMLAnalyzer::analyzeFile(const QString& sFileName)
 
     return true;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Runs an analysis on the files in \a sDirectory. Returns \c true on success.
@@ -744,131 +764,104 @@ bool QMLAnalyzer::analyze_Recurse(QString sDirectory)
     return true;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
-    Runs a check on the contents of \a pFile. \a sFileName is the full file name.
+    Runs a check on the contents of \a pFile.
 */
-void QMLAnalyzer::runGrammar(const QString& sFileName, QMLFile* pFile)
+void QMLAnalyzer::runGrammar(QMLFile* pFile)
 {
     foreach (QMLEntity* pEntity, pFile->contents())
     {
-        runGrammar_Recurse(sFileName, pEntity);
+        runGrammar_Recurse(pFile, pEntity);
     }
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Runs a check on the contents of \a pEntity. \br\br
-    \a sFileName is the full name of the file being analyzed.
+    \a pFile is the file being analyzed.
 */
-void QMLAnalyzer::runGrammar_Recurse(const QString& sFileName, QMLEntity* pEntity)
+void QMLAnalyzer::runGrammar_Recurse(QMLFile* pFile, QMLEntity* pEntity)
 {
-    if (pEntity == nullptr)
+    if (pEntity != nullptr)
     {
-        return;
-    }
+        bool bHasRejects = false;
 
-    // Check symbol usage if it is an item
-    QMLItem* pItem = dynamic_cast<QMLItem*>(pEntity);
+        QMap<QString, QMLEntity*> mMembers = pEntity->members();
 
-    if (pItem != nullptr)
-    {
-        QMap<QString, QMLEntity*> unusedProperties = pItem->unusedProperties();
+        QVector<CXMLNode> vChecks = m_xGrammar.getNodesByTagName(ANALYZER_TOKEN_CHECK);
 
-        foreach (QString sKey, unusedProperties.keys())
+        foreach (CXMLNode xCheck, vChecks)
         {
-            outputError(sFileName, unusedProperties[sKey]->position(), "Unreferenced property");
-        }
-    }
+            QString sClassName = xCheck.attributes()[ANALYZER_TOKEN_CLASS];
 
-    // Check symbol usage if it is a function
-    QMLFunction* pFunction = dynamic_cast<QMLFunction*>(pEntity);
-
-    if (pFunction != nullptr)
-    {
-        QMap<QString, QMLEntity*> unusedVariables = pFunction->unusedVariables();
-
-        foreach (QString sKey, unusedVariables.keys())
-        {
-            outputError(sFileName, unusedVariables[sKey]->position(), "Unreferenced variable");
-        }
-
-        QMap<QString, QMLEntity*> unusedParameters = pFunction->unusedParameters();
-
-        foreach (QString sKey, unusedParameters.keys())
-        {
-            outputError(sFileName, unusedParameters[sKey]->position(), "Unreferenced parameter");
-        }
-    }
-
-    bool bHasRejects = false;
-
-    QMap<QString, QMLEntity*> mMembers = pEntity->members();
-
-    QVector<CXMLNode> vChecks = m_xGrammar.getNodesByTagName(ANALYZER_TOKEN_CHECK);
-
-    foreach (CXMLNode xCheck, vChecks)
-    {
-        QString sClassName = xCheck.attributes()[ANALYZER_TOKEN_CLASS];
-
-        if (pEntity->metaObject()->className() == sClassName)
-        {
-            QVector<CXMLNode> vAccepts = xCheck.getNodesByTagName(ANALYZER_TOKEN_ACCEPT);
-            QVector<CXMLNode> vRejects = xCheck.getNodesByTagName(ANALYZER_TOKEN_REJECT);
-
-            foreach (CXMLNode xReject, vRejects)
+            if (pEntity->metaObject()->className() == sClassName)
             {
-                if (runGrammar_Reject(sFileName, sClassName, pEntity, xReject, false))
-                    bHasRejects = true;
-            }
+                QVector<CXMLNode> vAccepts = xCheck.getNodesByTagName(ANALYZER_TOKEN_ACCEPT);
+                QVector<CXMLNode> vRejects = xCheck.getNodesByTagName(ANALYZER_TOKEN_REJECT);
 
-            foreach (CXMLNode xAccept, vAccepts)
-            {
-                if (runGrammar_Reject(sFileName, sClassName, pEntity, xAccept, true))
-                    bHasRejects = true;
+                foreach (CXMLNode xReject, vRejects)
+                {
+                    if (runGrammar_Reject(pFile, sClassName, pEntity, xReject, false))
+                        bHasRejects = true;
+                }
+
+                foreach (CXMLNode xAccept, vAccepts)
+                {
+                    if (runGrammar_Reject(pFile, sClassName, pEntity, xAccept, true))
+                        bHasRejects = true;
+                }
             }
         }
-    }
 
-    if (bHasRejects == false)
-    {
-        foreach (QString sKey, mMembers.keys())
+        if (bHasRejects == false)
         {
-            runGrammar_Recurse(sFileName, mMembers[sKey]);
-        }
-
-        QMLComplexEntity* pComplex = dynamic_cast<QMLComplexEntity*>(pEntity);
-
-        if (pComplex != nullptr)
-        {
-            foreach (QMLEntity* pChildItem, pComplex->contents())
+            foreach (QString sKey, mMembers.keys())
             {
-                runGrammar_Recurse(sFileName, pChildItem);
+                runGrammar_Recurse(pFile, mMembers[sKey]);
+            }
+
+            QMLComplexEntity* pComplex = dynamic_cast<QMLComplexEntity*>(pEntity);
+
+            if (pComplex != nullptr)
+            {
+                foreach (QMLEntity* pChildItem, pComplex->contents())
+                {
+                    runGrammar_Recurse(pFile, pChildItem);
+                }
             }
         }
     }
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Runs a rule on the contents of \a pEntity. \br
     Returns \c true if an error was yielded. \br\br
-    \a sFileName is the full name of the file being analyzed.
+    \a pFile is the file being analyzed.
     \a sClassName is the class name of the entity being analyzed.
     \a xRule is the grammar rule to check.
     \a bInverseLogic inverses the result of the rule if \c true.
 */
-bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule, bool bInverseLogic)
+bool QMLAnalyzer::runGrammar_Reject(QMLFile* pFile, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule, bool bInverseLogic)
 {
     QString sMember = processMacros(xRule.attributes()[ANALYZER_TOKEN_MEMBER].toLower());
     QString sValue = processMacros(xRule.attributes()[ANALYZER_TOKEN_VALUE]);
     QString sType = processMacros(xRule.attributes()[ANALYZER_TOKEN_TYPE]);
     QString sText = processMacros(xRule.attributes()[ANALYZER_TOKEN_TEXT]);
     QString sNestedCount = processMacros(xRule.attributes()[ANALYZER_TOKEN_NESTED_COUNT]);
+    QString sUnrefedSymbol = processMacros(xRule.attributes()[ANALYZER_TOKEN_UNREFED_SYMBOL]);
     QString sCount = processMacros(xRule.attributes()[ANALYZER_TOKEN_COUNT]);
     QString sRegExp = processMacros(xRule.attributes()[ANALYZER_TOKEN_REGEXP]);
     QString sPath = processMacros(xRule.attributes()[ANALYZER_TOKEN_PATH]);
     QString sList = processMacros(xRule.attributes()[ANALYZER_TOKEN_LIST]);
     QString sClass = processMacros(xRule.attributes()[ANALYZER_TOKEN_CLASS]);
+    QString sUsed = processMacros(xRule.attributes()[ANALYZER_TOKEN_USED]);
 
-    if (runGrammar_SatisfiesConditions(sFileName, sClassName, pEntity, xRule))
+    if (runGrammar_SatisfiesConditions(pFile, sClassName, pEntity, xRule))
     {
         QMap<QString, QMLEntity*> mMembers = pEntity->members();
 
@@ -883,7 +876,71 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
 
                 if (iNestedCount > iNestedCountAllowed)
                 {
-                    outputError(sFileName, pEntity->position(), sText);
+                    outputError(pFile->fileName(), pEntity->position(), sText);
+                    return true;
+                }
+            }
+        }
+        // Check unreferenced symbols
+        else if (sUnrefedSymbol.isEmpty() == false)
+        {
+            // Check symbol usage if it is an item
+            QMLItem* pItem = dynamic_cast<QMLItem*>(pEntity);
+
+            if (pItem != nullptr)
+            {
+                QMap<QString, QMLEntity*> unusedProperties = pItem->unusedProperties();
+
+                if ((unusedProperties.count() > 0) ^ bInverseLogic)
+                {
+                    foreach (QString sKey, unusedProperties.keys())
+                    {
+                        outputError(pFile->fileName(), unusedProperties[sKey]->position(), "Unreferenced property");
+                    }
+
+                    return true;
+                }
+            }
+
+            // Check symbol usage if it is a function
+            QMLFunction* pFunction = dynamic_cast<QMLFunction*>(pEntity);
+
+            if (pFunction != nullptr)
+            {
+                QMap<QString, QMLEntity*> unusedVariables = pFunction->unusedVariables();
+
+                if ((unusedVariables.count() > 0) ^ bInverseLogic)
+                {
+                    foreach (QString sKey, unusedVariables.keys())
+                    {
+                        outputError(pFile->fileName(), unusedVariables[sKey]->position(), "Unreferenced variable");
+                    }
+
+                    return true;
+                }
+
+                QMap<QString, QMLEntity*> unusedParameters = pFunction->unusedParameters();
+
+                if ((unusedParameters.count() > 0) ^ bInverseLogic)
+                {
+                    foreach (QString sKey, unusedParameters.keys())
+                    {
+                        outputError(pFile->fileName(), unusedParameters[sKey]->position(), "Unreferenced parameter");
+                    }
+
+                    return true;
+                }
+            }
+        }
+        else if (sUsed.isEmpty() == false)
+        {
+            QMLImport* pImport = dynamic_cast<QMLImport*>(pEntity);
+
+            if (pImport != nullptr)
+            {
+                if ((runGrammar_importUsed(pFile, pImport) == false) ^ bInverseLogic)
+                {
+                    outputError(pFile->fileName(), pEntity->position(), sText);
                     return true;
                 }
             }
@@ -902,7 +959,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
 
                 if (lNames.contains(sMemberToString) ^ bInverseLogic)
                 {
-                    outputError(sFileName, pEntity->position(), sText);
+                    outputError(pFile->fileName(), pEntity->position(), sText);
                     return true;
                 }
             }
@@ -911,7 +968,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
             {
                 if ((sMemberClass == sClass) ^ bInverseLogic)
                 {
-                    outputError(sFileName, pEntity->position(), sText);
+                    outputError(pFile->fileName(), pEntity->position(), sText);
                     return true;
                 }
             }
@@ -920,7 +977,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
             {
                 if (sPath == ANALYZER_TOKEN_EXISTS)
                 {
-                    QFileInfo tFileInfo(sFileName);
+                    QFileInfo tFileInfo(pFile->fileName());
                     QString sDirectory = tFileInfo.absolutePath();
                     QDir tDirectory(sDirectory);
                     QString sFullImportPath = tDirectory.absoluteFilePath(sMemberToString);
@@ -943,7 +1000,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
 
                     if ((bExists == true) ^ bInverseLogic)
                     {
-                        outputError(sFileName, pEntity->position(), sText);
+                        outputError(pFile->fileName(), pEntity->position(), sText);
                         return true;
                     }
                 }
@@ -955,7 +1012,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
 
                 if ((tRegExp.exactMatch(sMemberToString)) ^ bInverseLogic)
                 {
-                    outputError(sFileName, pEntity->position(), sText);
+                    outputError(pFile->fileName(), pEntity->position(), sText);
                     return true;
                 }
             }
@@ -969,7 +1026,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
                 {
                     if ((pComplex->contents().count() > iCountToCheck) ^ bInverseLogic)
                     {
-                        outputError(sFileName, pEntity->position(), sText);
+                        outputError(pFile->fileName(), pEntity->position(), sText);
                         return true;
                     }
                 }
@@ -981,7 +1038,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
 
                 if ((sTypeToString == sType) ^ bInverseLogic)
                 {
-                    outputError(sFileName, pEntity->position(), sText);
+                    outputError(pFile->fileName(), pEntity->position(), sText);
                     return true;
                 }
             }
@@ -989,7 +1046,7 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
             {
                 if ((sMemberToString == sValue) ^ bInverseLogic)
                 {
-                    outputError(sFileName, pEntity->position(), sText);
+                    outputError(pFile->fileName(), pEntity->position(), sText);
                     return true;
                 }
             }
@@ -999,14 +1056,16 @@ bool QMLAnalyzer::runGrammar_Reject(const QString& sFileName, const QString& sCl
     return false;
 }
 
+//-------------------------------------------------------------------------------------------------
+
 /*!
     Tests the conditions of a rule regarding \a pEntity. \br\br
     Returns \c true if all conditions passed. \br\br
-    \a sFileName is the full name of the file being analyzed.
+    \a pFile is the file being analyzed.
     \a sClassName is the class name of the entity being analyzed.
     \a xRule is the grammar rule to check.
 */
-bool QMLAnalyzer::runGrammar_SatisfiesConditions(const QString& sFileName, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule)
+bool QMLAnalyzer::runGrammar_SatisfiesConditions(QMLFile* pFile, const QString& sClassName, QMLEntity* pEntity, CXMLNode xRule)
 {
     QVector<CXMLNode> vConditions = xRule.getNodesByTagName(ANALYZER_TOKEN_CONDITION);
 
@@ -1019,6 +1078,7 @@ bool QMLAnalyzer::runGrammar_SatisfiesConditions(const QString& sFileName, const
         QString sEmpty = xCondition.attributes()[ANALYZER_TOKEN_EMPTY].toLower();
         QString sValue = xCondition.attributes()[ANALYZER_TOKEN_VALUE];
         QString sNegate = xCondition.attributes()[ANALYZER_TOKEN_NEGATE].toLower();
+        QString sClass = xCondition.attributes()[ANALYZER_TOKEN_CLASS];
 
         if (mMembers.contains(sMember) && mMembers[sMember] != nullptr)
         {
@@ -1054,12 +1114,38 @@ bool QMLAnalyzer::runGrammar_SatisfiesConditions(const QString& sFileName, const
         }
         else
         {
+            // Check the parent condition
+            if (sMember == ANALYZER_TOKEN_PARENT)
+            {
+                QMLEntity* pParent = dynamic_cast<QMLEntity*>(pEntity->parent());
+
+                if (pParent != nullptr)
+                {
+                    if (sClass.isEmpty() == false)
+                    {
+                        if (pParent->metaObject()->className() == sClass)
+                        {
+                            if (sNegate == ANALYZER_TOKEN_TRUE)
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            if (sNegate != ANALYZER_TOKEN_TRUE)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
             // Check the file name condition
-            if (sMember == ANALYZER_TOKEN_FILE_NAME)
+            else if (sMember == ANALYZER_TOKEN_FILE_NAME)
             {
                 if (sOperation == ANALYZER_TOKEN_CONTAINS)
                 {
-                    if (sFileName.contains(sValue))
+                    if (pFile->fileName().contains(sValue))
                     {
                         if (sNegate == ANALYZER_TOKEN_TRUE)
                         {
@@ -1076,7 +1162,7 @@ bool QMLAnalyzer::runGrammar_SatisfiesConditions(const QString& sFileName, const
                 }
                 else
                 {
-                    if (sFileName == sValue)
+                    if (pFile->fileName() == sValue)
                     {
                         if (sNegate == ANALYZER_TOKEN_TRUE)
                         {
@@ -1104,6 +1190,8 @@ bool QMLAnalyzer::runGrammar_SatisfiesConditions(const QString& sFileName, const
 
     return true;
 }
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Returns the count of all nested instances of \a sClassName in \a pEntity.
@@ -1145,6 +1233,98 @@ int QMLAnalyzer::runGrammar_CountNested(const QString& sClassName, QMLEntity* pE
 
     return iCount;
 }
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    Returns \c true if \a pImport is used by the QML contents. \br\br
+    \a pFile is the file being analyzed.
+*/
+bool QMLAnalyzer::runGrammar_importUsed(QMLFile* pFile, QMLImport* pImport)
+{
+    bool bUsed = false;
+
+    QFileInfo tCheckFileInfo(pFile->fileName());
+
+    // List all files in import directory
+    QDir dImportDirectory(tCheckFileInfo.absoluteDir().canonicalPath() + "/" + pImport->name()->value().toString());
+    QString sImportDirectory = dImportDirectory.canonicalPath();
+
+    QStringList slNameFilter;
+    slNameFilter << "*.qml";
+
+    dImportDirectory.setFilter(QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::Files);
+    QStringList lFiles = dImportDirectory.entryList(slNameFilter);
+
+    foreach (QString sFile, lFiles)
+    {
+        QFileInfo info(sImportDirectory + "/" + sFile);
+        QString sClassName = info.baseName();
+
+        if (isClassUsed(pFile, pFile, sClassName))
+        {
+            return true;
+        }
+    }
+
+    return bUsed;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    Returns \c true if \a sClassName is used by the QML contents. \br\br
+    \a pFile is the file being analyzed.
+    \a pEntity is the entity being checked.
+*/
+bool QMLAnalyzer::isClassUsed(QMLFile* pFile, QMLEntity* pEntity, const QString& sClassName)
+{
+    if (pEntity == nullptr)
+    {
+        return false;
+    }
+
+    QMLItem* pItem = dynamic_cast<QMLItem*>(pEntity);
+
+    if (pItem != nullptr && pItem->name() != nullptr && pItem->name()->value().toString() == sClassName)
+    {
+        return true;
+    }
+
+    QMLIdentifier* pIdentifier = dynamic_cast<QMLIdentifier*>(pEntity);
+
+    if (pIdentifier != nullptr && pIdentifier->value().toString() == sClassName)
+    {
+        return true;
+    }
+
+    QMap<QString, QMLEntity*> mMembers = pEntity->members();
+
+    foreach (QString sKey, mMembers.keys())
+    {
+        if (isClassUsed(pFile, mMembers[sKey], sClassName))
+        {
+            return true;
+        }
+    }
+
+    QMLComplexEntity* pComplex = dynamic_cast<QMLComplexEntity*>(pEntity);
+
+    if (pComplex != nullptr)
+    {
+        foreach (QMLEntity* pChildItem, pComplex->contents())
+        {
+            if (isClassUsed(pFile, pChildItem, sClassName))
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+//-------------------------------------------------------------------------------------------------
 
 /*!
     Outputs the error in \a sText. \br\br

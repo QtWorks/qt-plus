@@ -19,6 +19,7 @@
 
 //-------------------------------------------------------------------------------------------------
 
+// Defines an endpoint for a stream using a socket
 class QTPLUSSHARED_EXPORT CSocketStream : public CConnectedStream
 {
 	Q_OBJECT
@@ -114,7 +115,7 @@ protected:
 		{
 			CClientData* pData = getFromSocket(pSocket);
 
-			if (pData != NULL)
+			if (pData != nullptr)
 			{
 				delete pData;
 			}

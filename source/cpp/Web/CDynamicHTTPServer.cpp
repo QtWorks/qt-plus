@@ -13,7 +13,7 @@
 /*!
     \class CDynamicHTTPServer
     \inmodule qt-plus
-    \brief A server based on CHTTPServer that can serve pages generated in C++ (MS ASP style).
+    \brief A server based on CHTTPServer that can serve pages generated in C++ (like MS ASP).
 */
 
 //-------------------------------------------------------------------------------------------------
@@ -120,7 +120,7 @@ void CDynamicHTTPServer::getContent(const CWebContext& tContext, QString& sHead,
         {
             CWebControl* pControl = CWebPage::fromViewState(tContext.m_mArguments[TOKEN_VIEWSTATE], this);
 
-            if (pControl)
+            if (pControl != nullptr)
             {
                 QString sEventControlName = tContext.m_mArguments[TOKEN_CONTROL];
 
@@ -143,7 +143,7 @@ void CDynamicHTTPServer::getContent(const CWebContext& tContext, QString& sHead,
 
                 CWebPage* pPage = dynamic_cast<CWebPage*>(pControl);
 
-                if (pPage != NULL)
+                if (pPage != nullptr)
                 {
                     pPage->setViewstate(pPage->getViewState(this));
                     sCustomResponse = pPage->getPropertyChanges();
@@ -196,7 +196,7 @@ CWebPage* CDynamicHTTPServer::getPage(CDynamicHTTPServer* pServer, const CWebCon
     Q_UNUSED(pServer);
     Q_UNUSED(tContext);
 
-    return NULL;
+    return nullptr;
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -135,6 +135,16 @@ QString CWebPage::getPropertyChanges()
 //-------------------------------------------------------------------------------------------------
 
 /*!
+    Returns \c true if the page was constructed by deserialization
+*/
+bool CWebPage::isDeserialized() const
+{
+    return m_bDeserialized;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
     This method returns a HTML rendering of the page and its child controls. \br\br
     \a pServer is the server requesting the contents. \br
     \a sHead is filled with the HTML page head statements. \br
@@ -211,7 +221,8 @@ void CWebPage::propertyModified(const QString& sID, const QString& sPropertyName
 //-------------------------------------------------------------------------------------------------
 
 /*!
-    This adds a javascript line that will set \a sPropertyName of control \a sID to value \a sPropertyValue.
+    This adds javascript code that will add the \a pChildControl control to the control \a sID client-side. \br\br
+    It uses the htmlToElement() function which in turn uses the <template> HTML type to generate a HTML control.
 */
 void CWebPage::controlAdded(const QString& sID, CWebControl* pChildControl)
 {
@@ -237,7 +248,7 @@ void CWebPage::controlAdded(const QString& sID, CWebControl* pChildControl)
 //-------------------------------------------------------------------------------------------------
 
 /*!
-    This adds a javascript line that will set \a sPropertyName of control \a sID to value \a sPropertyValue.
+    This adds javascript code that will delete the \a sChildID child control of \a sID client-side.
 */
 void CWebPage::controlDeleted(const QString& sID, const QString& sChildID)
 {
@@ -373,7 +384,7 @@ void CWebPage::addHTML(QString& sHead, QString& sBody)
             .arg(HTTP_POST);
 
     // Debug out
-    // sBody.append(QString("<div style='div1'><textarea id='DebugOut'></textarea></div>"HTML_NL));
+    // sBody.append(QString("<div width='100%' style='div1'><textarea id='DebugOut'></textarea></div>"HTML_NL));
 
     foreach (CWebControl* pControl, m_vControls)
     {

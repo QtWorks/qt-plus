@@ -9,6 +9,10 @@ HEADERS += \
     source/cpp/QTree.h \
     source/cpp/CPIDController.h \
     source/cpp/CAverager.h \
+    source/cpp/CLogger.h \
+    source/cpp/CTracableMutex.h \
+    source/cpp/CTimeSampler.h \
+    source/cpp/CMemoryMonitor.h \
     source/cpp/Image/CLargeMatrix.h \
     source/cpp/Image/CImageHistogram.h \
     source/cpp/Image/CImageUtilities.h \
@@ -37,6 +41,7 @@ HEADERS += \
     source/cpp/Web/WebControls/CWebModelControl.h \
     source/cpp/Web/WebControls/CWebListView.h \
     source/cpp/ISerializable.h \
+    source/cpp/IJSONModelProvider.h \
     source/cpp/CInterpolator.h \
     source/cpp/GeoTools/coordcnv.h \
     source/cpp/GeoTools/geocent.h \
@@ -46,6 +51,7 @@ HEADERS += \
     source/cpp/GeoTools/ups.h \
     source/cpp/GeoTools/utm.h \
     source/cpp/GeoTools/UtmMgrs.h \
+    source/cpp/GeoTools/geotrans.h \
     source/cpp/CGeoUtilities.h \
     source/cpp/QMLTree/QMLEntity.h \
     source/cpp/QMLTree/QMLComplexEntity.h \
@@ -82,6 +88,10 @@ SOURCES += \
     source/cpp/CXMLNodable.cpp \
     source/cpp/CXMLNode.cpp \
     source/cpp/CPIDController.cpp \
+    source/cpp/CLogger.cpp \
+    source/cpp/CTracableMutex.cpp \
+    source/cpp/CTimeSampler.cpp \
+    source/cpp/CMemoryMonitor.cpp \
     source/cpp/Image/CLargeMatrix.cpp \
     source/cpp/Image/CImageHistogram.cpp \
     source/cpp/Image/CImageUtilities.cpp \
@@ -118,6 +128,7 @@ SOURCES += \
     source/cpp/GeoTools/ups.cpp \
     source/cpp/GeoTools/utm.cpp \
     source/cpp/GeoTools/UtmMgrs.cpp \
+    source/cpp/GeoTools/geotrans.cpp \
     source/cpp/CGeoUtilities.cpp \
     source/cpp/QMLTree/QMLEntity.cpp \
     source/cpp/QMLTree/QMLComplexEntity.cpp \
