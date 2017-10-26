@@ -111,7 +111,7 @@ public:
     virtual void removeUnreferencedSymbols(QMLTreeContext* pContext) Q_DECL_OVERRIDE;
 
     //!
-    virtual void toQML(QTextStream& stream, const QMLEntity* pParent = nullptr, int iIdent = 0) const Q_DECL_OVERRIDE;
+    virtual void toQML(QTextStream& stream, QMLFormatter& formatter, const QMLEntity* pParent = nullptr) const Q_DECL_OVERRIDE;
 
     //!
     virtual CXMLNode toXMLNode(CXMLNodableContext* pContext, CXMLNodable* pParent) Q_DECL_OVERRIDE;
@@ -125,6 +125,12 @@ public:
 
     //!
     static QMLComplexEntity* makeBlock(QMLEntity* pEntity);
+
+    //!
+    static bool isContainer(const QMLEntity* pEntity);
+
+    //!
+    static bool isPropertyAssignment(const QMLEntity* pEntity);
 
     //-------------------------------------------------------------------------------------------------
     // Properties

@@ -22,19 +22,11 @@ CLogger::CLogger()
     , m_iFileSize(0)
     , m_eLogLevel(llDebug)
     , m_iMaxFileSize(DEFAULT_MAX_FILE_SIZE)
-    , m_bBackupActive(false)
+    , m_bBackupActive(true)
 {
     QString sName = QCoreApplication::applicationFilePath().split("/").last();
     QString sPath = QCoreApplication::applicationDirPath() + "/Logs";
-    QString sFinal = sName + ".log";
-
-    /*
-    initialize(
-                sPath,
-                sFinal,
-                CPreferencesManager::getInstance()->getPreferences().getNodeByTagName("Logger")
-                );
-                */
+    QString sFinal = QString("%1.log").arg(sName);
 
     initialize(sPath, sFinal, CXMLNode());
 
@@ -57,7 +49,6 @@ CLogger::CLogger(QString sPath, QString sFileName)
     , m_iMaxFileSize(DEFAULT_MAX_FILE_SIZE)
     , m_bBackupActive(false)
 {
-    // initialize(sPath, sFileName, CPreferencesManager::getInstance()->getPreferences());
     initialize(sPath, sFileName, CXMLNode());
 
     connect(&m_tTimer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -160,6 +151,13 @@ void CLogger::setIgnoreTokens(const QString& sTokens)
 void CLogger::setMaxFileSize(int iValue)
 {
     m_iMaxFileSize = iValue;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void CLogger::setBackupActive(bool value)
+{
+    m_bBackupActive = value;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -305,16 +303,16 @@ void CLogger::log(ELogLevel eLevel, const QString& sText, const QString& sToken)
     QMutexLocker locker(&m_tMutex);
     QString sFinalText = sText;
 
-    // Est-ce que le token passe?
+    // Is the token accepted?
     if (filterToken(sToken) == false) return;
 
-    // Ajout du token dans le texte
+    // Add the token in the text
     if (sToken != "")
     {
         sFinalText = "<" + sToken + "> " + sText;
     }
 
-    // Remplacement de noms ind?sirables
+    // Replace undesirable characters
     sFinalText = sFinalText.replace("\"", "'");
 
     if (eLevel >= llError)
@@ -326,67 +324,67 @@ void CLogger::log(ELogLevel eLevel, const QString& sText, const QString& sToken)
     {
         switch (eLevel)
         {
-        case llDebug :
-        {
-            if (m_eLogLevel <= llDebug)
+            case llDebug :
             {
-                m_iFileSize += m_pFile->write(getFinalStringForLevel(llDebug, sFinalText).toLatin1().constData());
+                if (m_eLogLevel <= llDebug)
+                {
+                    m_iFileSize += m_pFile->write(getFinalStringForLevel(llDebug, sFinalText).toLatin1().constData());
+                }
+                break;
             }
-        }
-            break;
 
-        case llInfo :
-        {
-            if (m_eLogLevel <= llInfo)
+            case llInfo :
             {
-                m_iFileSize += m_pFile->write(getFinalStringForLevel(llInfo, sFinalText).toLatin1().constData());
+                if (m_eLogLevel <= llInfo)
+                {
+                    m_iFileSize += m_pFile->write(getFinalStringForLevel(llInfo, sFinalText).toLatin1().constData());
+                }
+                break;
             }
-        }
-            break;
 
-        case llWarning :
-        {
-            if (m_eLogLevel <= llWarning)
+            case llWarning :
             {
-                m_iFileSize += m_pFile->write(getFinalStringForLevel(llWarning, sFinalText).toLatin1().constData());
+                if (m_eLogLevel <= llWarning)
+                {
+                    m_iFileSize += m_pFile->write(getFinalStringForLevel(llWarning, sFinalText).toLatin1().constData());
 
-                foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                    foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                }
+                break;
             }
-        }
-            break;
 
-        case llError :
-        {
-            if (m_eLogLevel <= llError)
+            case llError :
             {
-                m_iFileSize += m_pFile->write(getFinalStringForLevel(llError, sFinalText).toLatin1().constData());
+                if (m_eLogLevel <= llError)
+                {
+                    m_iFileSize += m_pFile->write(getFinalStringForLevel(llError, sFinalText).toLatin1().constData());
 
-                foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                    foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                }
+                break;
             }
-        }
-            break;
 
-        case llCritical :
-        {
-            if (m_eLogLevel <= llCritical)
+            case llCritical :
             {
-                m_iFileSize += m_pFile->write(getFinalStringForLevel(llCritical, sFinalText).toLatin1().constData());
+                if (m_eLogLevel <= llCritical)
+                {
+                    m_iFileSize += m_pFile->write(getFinalStringForLevel(llCritical, sFinalText).toLatin1().constData());
 
-                foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                    foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                }
+                break;
             }
-        }
-            break;
 
-        case llAlways :
-        {
-            if (m_eLogLevel <= llAlways)
+            case llAlways :
             {
-                m_iFileSize += m_pFile->write(getFinalStringForLevel(llAlways, sFinalText).toLatin1().constData());
+                if (m_eLogLevel <= llAlways)
+                {
+                    m_iFileSize += m_pFile->write(getFinalStringForLevel(llAlways, sFinalText).toLatin1().constData());
 
-                foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                    foreach (CLogger* pLogger, m_vChainedLoggers) { pLogger->log(eLevel, sFinalText, sToken); }
+                }
+                break;
             }
-        }
-            break;
         }
     }
 }
@@ -436,12 +434,12 @@ QString CLogger::getShortStringForLevel(ELogLevel eLevel, const QString& sText)
 
     switch (eLevel)
     {
-    case llDebug	: sLogLevel = "DEBUG"; break;
-    case llInfo		: sLogLevel = "INFO"; break;
-    case llWarning	: sLogLevel = "WARNING"; break;
-    case llError	: sLogLevel = "ERROR"; break;
-    case llCritical	: sLogLevel = "CRITICAL"; break;
-    case llAlways	: sLogLevel = "ALWAYS"; break;
+        case llDebug	: sLogLevel = "DEBUG"; break;
+        case llInfo		: sLogLevel = "INFO"; break;
+        case llWarning	: sLogLevel = "WARNING"; break;
+        case llError	: sLogLevel = "ERROR"; break;
+        case llCritical	: sLogLevel = "CRITICAL"; break;
+        case llAlways	: sLogLevel = "ALWAYS"; break;
     }
 
     QString sFinalText = QString("[%1] - %2\n")
@@ -459,12 +457,12 @@ QString CLogger::getFinalStringForLevel(ELogLevel eLevel, const QString& sText)
 
     switch (eLevel)
     {
-    case llDebug	: sLogLevel = "DEBUG"; break;
-    case llInfo		: sLogLevel = "INFO"; break;
-    case llWarning	: sLogLevel = "WARNING"; break;
-    case llError	: sLogLevel = "ERROR"; break;
-    case llCritical	: sLogLevel = "CRITICAL"; break;
-    case llAlways	: sLogLevel = "ALWAYS"; break;
+        case llDebug	: sLogLevel = "DEBUG"; break;
+        case llInfo		: sLogLevel = "INFO"; break;
+        case llWarning	: sLogLevel = "WARNING"; break;
+        case llError	: sLogLevel = "ERROR"; break;
+        case llCritical	: sLogLevel = "CRITICAL"; break;
+        case llAlways	: sLogLevel = "ALWAYS"; break;
     }
 
     QDateTime tNow = QDateTime::currentDateTime();

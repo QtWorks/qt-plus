@@ -5,15 +5,13 @@ import QtQuick.Dialogs 1.0 as MyLib
 Item {
     id: root
 
-    property real prop1: root.prop8;
-    property real prop_2: 20;   // Camel casing error
+    property real prop1: root.prop8
+    property real prop_2: 20                                                                    // Camel casing error
     property real prop3: 30
     property real prop4: 40
-    property real Prop5: 50   // Camel casing error and unreferenced symbol
-
-    // Nested conditionals error
-    property bool prop6: prop1 > 0 ? prop1 : prop_2 > 0 ? prop_2 : prop3 > 0 ? prop3 : prop4;
-    property variant prop7: []  // Unreferenced symbol
+    property real Prop5: 50                                                                     // Camel casing error and unreferenced symbol
+    property bool prop6: prop1 > 0 ? prop1 : prop_2 > 0 ? prop_2 : prop3 > 0 ? prop3 : prop4    // Nested conditionals error
+    property variant prop7: []                                                                  // Unreferenced symbol
     property int prop8: 88
 
     property string property: ""
@@ -40,7 +38,7 @@ Item {
         var someVariable3 = 30, someVariable4 = 40;
         var someVariable5 = 50;
         var someVariable6 = 60;
-        var SomeVariable7 = 70;   // Camel casing error and unreferenced symbol
+        var SomeVariable7 = 70;                                                                 // Camel casing error and unreferenced symbol
 
         // Too many nested ifs error
         if (someVariable1 > 0) {
@@ -66,16 +64,20 @@ Item {
     }
 
     // Camel casing error
-    function Func2(someParameter1) {
-        var someVariable1 = 10, someVariable2 = 20; // Unreferenced symbols
+    function Func2(someParameter1, someParameter2) {
+        var someVariable1 = 10, someVariable2 = 20;         // Unreferenced symbol
 
         prop6 = Math.ceil(5.2);
 
         var date = new Date;
         prop6 = date.getMinutes();
+
+        while (prop6 !== null) {
+            func3(0.5 * prop6);
+        }
     }
 
-    function func3(someParameter1) {
+    function func3(someParameter1) {                        // Unreferenced parameter
         return { x: 0, y: 0 }
     }
 

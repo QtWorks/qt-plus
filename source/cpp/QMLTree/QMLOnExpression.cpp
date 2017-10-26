@@ -37,38 +37,41 @@ QMap<QString, QMLEntity*> QMLOnExpression::members()
 
 //-------------------------------------------------------------------------------------------------
 
-void QMLOnExpression::toQML(QTextStream& stream, const QMLEntity* pParent, int iIdent) const
+void QMLOnExpression::toQML(QTextStream& stream, QMLFormatter& formatter, const QMLEntity* pParent) const
 {
     Q_UNUSED(pParent);
 
+    formatter.processFragment(stream, QMLFormatter::qffBeforePropertyName);
+
     if (m_pName != nullptr)
     {
-        // m_pName->toQML(stream, this, iIdent + 1);
-        stream << m_pName->toString();
+        stream << m_pName->toSimpleString();
     }
 
     stream << " on ";
 
     if (m_pTarget != nullptr)
     {
-        m_pTarget->toQML(stream, this, iIdent + 1);
+        m_pTarget->toQML(stream, formatter, this);
     }
 
     if (pParent != nullptr)
     {
         stream << " { ";
+        formatter.processFragment(stream, QMLFormatter::qffBeforeItemContent);
     }
 
     foreach (QMLEntity* pEntity, m_vContents)
     {
         if (pEntity != nullptr)
         {
-            pEntity->toQML(stream, this, pParent != nullptr ? iIdent + 1 : iIdent);
+            pEntity->toQML(stream, formatter, this);
         }
     }
 
     if (pParent != nullptr)
     {
-        stream << " } ";
+        formatter.processFragment(stream, QMLFormatter::qffAfterItemContent);
+        stream << "} ";
     }
 }

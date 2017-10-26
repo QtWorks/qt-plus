@@ -15,6 +15,89 @@
 
 //-------------------------------------------------------------------------------------------------
 
+QMLFormatter::QMLFormatter()
+    : m_iIndentation(0)
+{
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void QMLFormatter::incIndentation()
+{
+    m_iIndentation++;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void QMLFormatter::decIndentation()
+{
+    m_iIndentation--;
+
+    if (m_iIndentation < 0)
+        m_iIndentation = 0;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void QMLFormatter::writeNewLine(QTextStream& stream)
+{
+    stream << "\r\n";
+
+    for (int i = 0; i < m_iIndentation * 4; i++)
+    {
+        stream << " ";
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void QMLFormatter::writeDoubleNewLine(QTextStream& stream)
+{
+    stream << "\r\n";
+    writeNewLine(stream);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+void QMLFormatter::processFragment(QTextStream& stream, EQMLFormatterFragment fragment)
+{
+    switch (fragment)
+    {
+        case qffBeforeImport:
+            writeNewLine(stream);
+            break;
+
+        case qffBeforeItemName:
+        case qffBeforeFunction:
+        case qffBeforeFor:
+        case qffBeforeWhile:
+        case qffBeforeSwitch:
+        case qffBeforeIf:
+            writeDoubleNewLine(stream);
+            break;
+
+        case qffBeforeItemContent:
+            incIndentation();
+            break;
+
+        case qffAfterItemContent:
+            decIndentation();
+            writeNewLine(stream);
+            break;
+
+        case qffBeforePropertyName:
+        case qffBeforeVariableDeclaration:
+        case qffBeforeFunctionCall:
+        case qffBeforeTopLevelBinaryOp:
+        case qffBeforeTopLevelUnaryOp:
+        case qffBeforeQualifiedExpression:
+            writeNewLine(stream);
+            break;
+    }
+}
+
+//-------------------------------------------------------------------------------------------------
+
 QList<QMLEntity*> QMLEntity::s_vEntities;
 int QMLEntity::s_iCreatedEntities = 0;
 int QMLEntity::s_iDeletedEntities = 0;
@@ -169,8 +252,19 @@ QString QMLEntity::toString() const
 {
     QString sText;
     QTextStream stream(&sText);
-    toQML(stream, nullptr);
+    QMLFormatter formatter;
+    toQML(stream, formatter);
     return sText;
+}
+
+//-------------------------------------------------------------------------------------------------
+
+/*!
+    Returns the entity as a simple string.
+*/
+QString QMLEntity::toSimpleString() const
+{
+    return m_vValue.toString();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -207,6 +301,8 @@ QMLEntity* QMLEntity::clone() const
     pEntity->m_pOrigin              = m_pOrigin;
     pEntity->m_iUsageCount          = m_iUsageCount;
     pEntity->m_bIsParenthesized     = m_bIsParenthesized;
+
+    return pEntity;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -355,7 +451,7 @@ void QMLEntity::removeUnreferencedSymbols(QMLTreeContext* pContext)
     Dumps the entity as QML to \a stream using \a iIdent for indentation. \br\br
     \a pParent is the caller of this method.
 */
-void QMLEntity::toQML(QTextStream& stream, const QMLEntity* pParent, int iIdent) const
+void QMLEntity::toQML(QTextStream& stream, QMLFormatter& formatter, const QMLEntity* pParent) const
 {
     Q_UNUSED(pParent);
 
@@ -401,6 +497,8 @@ CXMLNode QMLEntity::toXMLNode(CXMLNodableContext* pContext, CXMLNodable* pParent
     CXMLNode xNode(metaObject()->className());
     QString sValue = m_vValue.value<QString>();
 
+    xNode.attributes()["Position"] = QString("<%1, %2>").arg(m_pPosition.x()).arg(m_pPosition.y());
+
     if (sValue.isEmpty() == false)
     {
         xNode.attributes()["Value"] = sValue;
@@ -413,7 +511,7 @@ CXMLNode QMLEntity::toXMLNode(CXMLNodableContext* pContext, CXMLNodable* pParent
 
     if (parent() == nullptr)
     {
-        xNode.attributes()["Parent"] = "nullptr";
+        xNode.attributes()["Parent"] = "NULL";
     }
 
     if (m_pOrigin != nullptr)

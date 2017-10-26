@@ -10,6 +10,7 @@
 
 // Application
 #include "QMLType.h"
+#include "QMLComplexEntity.h"
 
 //-------------------------------------------------------------------------------------------------
 
@@ -43,7 +44,11 @@ public:
         boGreater,
         boGreaterOrEquals,
         boShiftLeft,
-        boShiftRight
+        boShiftRight,
+        boAddAssign,
+        boSubAssign,
+        boMulAssign,
+        boDivAssign
     };
 
     //-------------------------------------------------------------------------------------------------
@@ -91,7 +96,7 @@ public:
     //-------------------------------------------------------------------------------------------------
 
     //!
-    virtual void toQML(QTextStream& stream, const QMLEntity* pParent = nullptr, int iIdent = 0) const Q_DECL_OVERRIDE;
+    virtual void toQML(QTextStream& stream, QMLFormatter& formatter, const QMLEntity* pParent = nullptr) const Q_DECL_OVERRIDE;
 
     //!
     virtual CXMLNode toXMLNode(CXMLNodableContext* pContext, CXMLNodable* pParent) Q_DECL_OVERRIDE;

@@ -217,6 +217,8 @@ Declaration :
 ImportStatement :
     TOKEN_IMPORT JSMemberExpression Version
     {
+        PARSER_TRACE("ImportStatement", "JSMemberExpression Version");
+
         QMLEntity* pName = $<Object>2;
         QMLEntity* pVersion = $<Object>3;
 
@@ -232,6 +234,8 @@ ImportStatement :
     |
     TOKEN_IMPORT JSMemberExpression Version TOKEN_AS Identifier
     {
+        PARSER_TRACE("ImportStatement", "JSMemberExpression Version TOKEN_AS Identifier");
+
         QMLEntity* pName = $<Object>2;
         QMLEntity* pVersion = $<Object>3;
         QMLEntity* pAs = $<Object>5;
@@ -248,6 +252,8 @@ ImportStatement :
     |
     TOKEN_IMPORT JSMemberExpression
     {
+        PARSER_TRACE("ImportStatement", "JSMemberExpression");
+
         QMLEntity* pName = $<Object>2;
 
         if (pName != nullptr)
@@ -262,6 +268,8 @@ ImportStatement :
     |
     TOKEN_IMPORT JSMemberExpression TOKEN_AS Identifier
     {
+        PARSER_TRACE("ImportStatement", "JSMemberExpression TOKEN_AS Identifier");
+
         QMLEntity* pName = $<Object>2;
         QMLEntity* pAs = $<Object>4;
 
@@ -1269,7 +1277,10 @@ JSStatement_While :
 
         pContent = QMLComplexEntity::makeBlock(pContent);
 
-        $<Object>$ = new QMLFor(pInitialization->position(), pInitialization, pCondition, pIncrementation, pContent);
+        QMLFor* pNewFor = new QMLFor(pInitialization->position(), pInitialization, pCondition, pIncrementation, pContent);
+        pNewFor->setIsWhile(true);
+
+        $<Object>$ = pNewFor;
     }
 ;
 
@@ -1550,7 +1561,7 @@ JSAssignmentExpression :
 
         if (pLeft != nullptr && pRight != nullptr)
         {
-            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boAssign);
+            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boAddAssign);
         }
         else
         {
@@ -1567,7 +1578,7 @@ JSAssignmentExpression :
 
         if (pLeft != nullptr && pRight != nullptr)
         {
-            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boAssign);
+            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boSubAssign);
         }
         else
         {
@@ -1584,7 +1595,7 @@ JSAssignmentExpression :
 
         if (pLeft != nullptr && pRight != nullptr)
         {
-            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boAssign);
+            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boMulAssign);
         }
         else
         {
@@ -1601,7 +1612,7 @@ JSAssignmentExpression :
 
         if (pLeft != nullptr && pRight != nullptr)
         {
-            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boAssign);
+            $<Object>$ = new QMLBinaryOperation(pLeft->position(), pLeft, pRight, QMLBinaryOperation::boDivAssign);
         }
         else
         {

@@ -146,6 +146,7 @@ public:
             , m_iPreviousColumn(0)
             , m_bParsingFloat(false)
             , m_bParsingHexa(false)
+            , m_bLineEmpty(true)
         {
             QFile fInputFile(pFile->fileName());
 
@@ -189,6 +190,7 @@ public:
         int                 m_iCommentLevel;
         bool                m_bParsingFloat;
         bool                m_bParsingHexa;
+        bool                m_bLineEmpty;
     };
 
     //-------------------------------------------------------------------------------------------------

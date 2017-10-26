@@ -7,33 +7,36 @@
 
 // Qt
 #include <QObject>
-#include <QVariant>
-#include <QTextStream>
 
-// Library
-#include "QMLComplexEntity.h"
+// Application
+#include "QMLEntity.h"
 
 //-------------------------------------------------------------------------------------------------
 
-//! Defines a function variable declaration
-class QTPLUSSHARED_EXPORT QMLVariableDeclaration : public QMLComplexEntity
+//! Defines a comment
+class QTPLUSSHARED_EXPORT QMLComment : public QMLEntity
 {
     Q_OBJECT
 
 public:
 
+    enum ECommentType
+    {
+        ctSingleLineAtEnd,
+        ctSingleLine,
+        ctMultiLine,
+        ctMultiLineDoc
+    };
+
     //-------------------------------------------------------------------------------------------------
     // Constructors and destructor
     //-------------------------------------------------------------------------------------------------
 
-    //! Constructor with filename
-    QMLVariableDeclaration(const QPoint& pPosition);
-
-    //! Copy constructor
-    QMLVariableDeclaration(const QMLVariableDeclaration& target);
+    //! Constructor
+    QMLComment(const QPoint& pPosition, const QString& sText, ECommentType eType);
 
     //! Destructor
-    virtual ~QMLVariableDeclaration();
+    virtual ~QMLComment();
 
     //-------------------------------------------------------------------------------------------------
     // Setters
@@ -43,19 +46,23 @@ public:
     // Getters
     //-------------------------------------------------------------------------------------------------
 
+    ECommentType type() const;
+
     //-------------------------------------------------------------------------------------------------
     // Overridden methods
     //-------------------------------------------------------------------------------------------------
 
     //!
-    virtual QMap<QString, QMLEntity*> getDeclaredSymbols() Q_DECL_OVERRIDE;
+    virtual void toQML(QTextStream& stream, QMLFormatter& formatter, const QMLEntity* pParent = nullptr) const Q_DECL_OVERRIDE;
 
     //!
-    virtual void toQML(QTextStream& stream, QMLFormatter& formatter, const QMLEntity* pParent = nullptr) const Q_DECL_OVERRIDE;
+    virtual CXMLNode toXMLNode(CXMLNodableContext* pContext, CXMLNodable* pParent) Q_DECL_OVERRIDE;
 
     //-------------------------------------------------------------------------------------------------
     // Properties
     //-------------------------------------------------------------------------------------------------
 
 protected:
+
+    ECommentType    m_eType;
 };
